@@ -4,7 +4,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 import os
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "2"
 
 def CrossEntropy(outputs, targets):
     log_softmax_outputs = F.log_softmax(outputs, dim=1)
