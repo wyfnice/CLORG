@@ -19,7 +19,7 @@ from densenet import GradCAM
 from sklearn.model_selection import KFold
 from torch.utils.data import SubsetRandomSampler
 
-# 指定使用GPU
+
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 
@@ -47,7 +47,7 @@ LR = 0.01
 epoch = 100
 size = (80, 80)
 
-# 数据增强
+
 transform1 = transforms.Compose([
     transforms.Resize(size),
     transforms.RandomHorizontalFlip(),
@@ -73,11 +73,11 @@ transform_test = transforms.Compose([
     transforms.Resize(size)
 ])
 
-# 数据集路径
+
 train_dir = os.path.join("/home/weiyafang/NewCL/CIFAR/NewColonDataset/trainval/")
 test_dir = os.path.join("/home/weiyafang/NewCL/CIFAR/NewColonDataset/test/")
 
-# 加载数据集
+
 train_dataset = datasets.ImageFolder(
     root=train_dir,
     transform=TwoCropTransform(transform1, transform2)
@@ -87,17 +87,17 @@ test_dataset = datasets.ImageFolder(
     transform=transform_test
 )
 
-# 创建K折交叉验证
+
 kfold = KFold(n_splits=args.n_splits, shuffle=True, random_state=42)
 
-# 存储每个fold的结果
+
 fold_results = []
 
 
 def train_fold(fold_idx, train_idx, val_idx):
     print(f'Training Fold {fold_idx + 1}/{args.n_splits}')
 
-    # 创建数据加载器
+
     train_sampler = SubsetRandomSampler(train_idx)
     val_sampler = SubsetRandomSampler(val_idx)
 
@@ -115,7 +115,7 @@ def train_fold(fold_idx, train_idx, val_idx):
         num_workers=4
     )
 
-    # 初始化模型
+
     if args.model == "densenet121":
         model_name = densenet121
     elif args.model == "densenet169":
@@ -135,13 +135,13 @@ def train_fold(fold_idx, train_idx, val_idx):
     best_acc = 0
     best_model_state = None
 
-    # 训练循环
+  
     for epoch in range(args.epoch):
         if epoch in [30, 60, 90]:
             for param_group in optimizer.param_groups:
                 param_group['lr'] /= 10
 
-        # 训练阶段
+        
         net.train()
         sum_loss = 0.0
         correct = 0.0
@@ -182,7 +182,7 @@ def train_fold(fold_idx, train_idx, val_idx):
                       % (fold_idx + 1, epoch + 1, (i + 1 + epoch * length),
                          sum_loss / (i + 1), c_loss / (i + 1), 100 * correct / total))
 
-        # 验证阶段
+      
         net.eval()
         val_correct = 0.0
         val_total = 0.0
@@ -192,7 +192,7 @@ def train_fold(fold_idx, train_idx, val_idx):
             for data in val_loader:
                 images, labels = data
                 if isinstance(images, list):
-                    images = images[0]  # 只使用第一个视图进行验证
+                    images = images[0]  
                 images, labels = images.to(device), labels.to(device)
                 outputs, _ = net(images)
                 loss = criterion(outputs, labels)
@@ -206,15 +206,15 @@ def train_fold(fold_idx, train_idx, val_idx):
         print('Fold %d Validation Accuracy: %.4f%%, Validation Loss: %.4f' %
               (fold_idx + 1, val_acc, val_loss))
 
-        # 保存最佳模型
+     
         if val_acc > best_acc:
             best_acc = val_acc
             best_model_state = net.state_dict()
 
-    # 保存最佳模型
+ 
     torch.save(best_model_state, f"{args.model}_fold_{fold_idx + 1}_best.pth")
 
-    # 测试阶段
+
     test_loader = torch.utils.data.DataLoader(
         test_dataset,
         batch_size=BATCH_SIZE,
@@ -229,7 +229,7 @@ def train_fold(fold_idx, train_idx, val_idx):
     test_total = 0.0
     test_results = []
 
-    # 用于保存详细结果的列表
+  
     all_labels = []
     all_preds = []
     all_probs = []
@@ -238,7 +238,7 @@ def train_fold(fold_idx, train_idx, val_idx):
         for data in test_loader:
             images, labels = data
             if isinstance(images, list):
-                images = images[0]  # 只使用第一个视图进行测试
+                images = images[0]  
             images, labels = images.to(device), labels.to(device)
             outputs, _ = net(images)
             _, predicted = torch.max(outputs.data, 1)
@@ -247,7 +247,7 @@ def train_fold(fold_idx, train_idx, val_idx):
             test_total += float(labels.size(0))
             test_correct += float((predicted == labels).sum())
 
-            # 保存详细结果
+            
             all_labels.extend(labels.cpu().numpy())
             all_preds.extend(predicted.cpu().numpy())
             all_probs.extend(scores.cpu().numpy())
@@ -266,7 +266,7 @@ def train_fold(fold_idx, train_idx, val_idx):
 
 
 if __name__ == "__main__":
-    # 创建结果保存目录
+   
     if args.results_dir is None:
         results_dir = f"results_{args.model}"
     else:
@@ -275,10 +275,10 @@ if __name__ == "__main__":
     if not os.path.exists(results_dir):
         os.makedirs(results_dir)
 
-    # 获取所有训练数据的索引
+   
     indices = list(range(len(train_dataset)))
 
-    # 进行K折交叉验证
+ 
     all_fold_labels = []
     all_fold_preds = []
     all_fold_probs = []
@@ -290,23 +290,22 @@ if __name__ == "__main__":
         all_fold_preds.append(fold_preds)
         all_fold_probs.append(fold_probs)
 
-        # 保存每个fold的测试结果到结果目录
+       
         with open(os.path.join(results_dir, f"test_results_fold_{fold_idx + 1}.txt"), "w") as file:
             for result in test_results:
                 file.write(result + "\n")
 
-        # 保存每个fold的numpy数据到结果目录
+       
         np.save(os.path.join(results_dir, f"fold_{fold_idx + 1}_labels.npy"), fold_labels)
         np.save(os.path.join(results_dir, f"fold_{fold_idx + 1}_preds.npy"), fold_preds)
         np.save(os.path.join(results_dir, f"fold_{fold_idx + 1}_probs.npy"), fold_probs)
 
-    # 计算并打印平均结果
+   
     mean_acc = np.mean(fold_results)
     std_acc = np.std(fold_results)
     print("\nK-Fold Cross Validation Results:")
     print(f"Mean Accuracy: {mean_acc:.4f}% ± {std_acc:.4f}%")
 
-    # 保存总体结果到结果目录
     with open(os.path.join(results_dir, "kfold_results.txt"), "w") as file:
         file.write(f"Model: {args.model}\n")
         file.write(f"Number of folds: {args.n_splits}\n")
@@ -315,7 +314,7 @@ if __name__ == "__main__":
         for i, acc in enumerate(fold_results):
             file.write(f"Fold {i + 1}: {acc:.4f}%\n")
 
-    # 保存所有fold的汇总数据到结果目录
+   
     np.save(os.path.join(results_dir, "all_fold_labels.npy"), np.concatenate(all_fold_labels))
     np.save(os.path.join(results_dir, "all_fold_preds.npy"), np.concatenate(all_fold_preds))
     np.save(os.path.join(results_dir, "all_fold_probs.npy"), np.concatenate(all_fold_probs))
