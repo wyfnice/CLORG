@@ -145,27 +145,27 @@ class GradCAM:
         self.gradients = grad_output[0]
 
     def __call__(self, x):
-        # 进行前向传播并保存最后输出
+        
         outputs = self.model(x)
 
-        # 假设模型返回的第一个值是我们需要的分类结果
+        
         if isinstance(outputs, tuple):
-            output = outputs[0]  # 选择第一个张量
+            output = outputs[0]  
         else:
             output = outputs
 
-        # 获取目标类别
+    
         score = output[:, output.argmax(dim=1)]
         self.model.zero_grad()
-        # 进行反向传播以计算梯度
+       
         score.backward(retain_graph=True)
 
-        # 计算 Grad-CAM
+       
         gradient = self.gradients.mean(dim=[2, 3], keepdim=True)
         cam = F.relu((self.activation * gradient).sum(dim=1, keepdim=True))
         cam = F.interpolate(cam, size=(x.shape[2], x.shape[3]), mode='bilinear', align_corners=False)
 
-        # 标准化
+     
         cam = cam - cam.min()
         cam = cam / cam.max()
         return cam
@@ -213,21 +213,21 @@ class DenseNet(nn.Module):
                 drop_rate=drop_rate,
                 memory_efficient=memory_efficient
             )
-            self.features.add_module('denseblock%d' % (i + 1), block) # 由多个密集层组成，每个密集层将输入特征输入和它自己的输出特征拼接在一起
+            self.features.add_module('denseblock%d' % (i + 1), block) 
             num_features = num_features + num_layers * growth_rate
             if i != len(block_config) - 1:
                 trans = _Transition(num_input_features=num_features,
                                     num_output_features=num_features // 2)
-                self.features.add_module('transition%d' % (i + 1), trans) #用于下采样，减少特征图的大小
+                self.features.add_module('transition%d' % (i + 1), trans) 
                 num_features = num_features // 2
 
-        # Final batch norm 最终标准化和全连接层
+        # Final batch norm 
         self.features.add_module('norm5', nn.BatchNorm2d(num_features))
 
-        # Linear layer 分类层
+        # Linear layer
         self.classifier = nn.Linear(num_features, num_classes)
 
-        # Official init from torch repo.初始化权重，初始化卷积层、批标准化层和全连接层的权重
+        # Official init from torch repo.
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 nn.init.kaiming_normal_(m.weight)
@@ -242,26 +242,26 @@ class DenseNet(nn.Module):
 
     def forward(self, x):
         feature_list = []
-        fft_features = []  # 存储傅里叶变换特征
+        fft_features = [] 
 
         for name, layer in self.features.named_children():
             x = layer(x)
             if isinstance(layer, nn.MaxPool2d) or 'denseblock' in name or 'transition' in name:
-                # 计算傅里叶变换
+                
                 fft_result = torch.fft.fft2(x)
                 fft_shift = torch.fft.fftshift(fft_result)
 
-                # 提取幅度谱和相位谱
+               
                 magnitude_spectrum = torch.abs(fft_shift)
                 phase_spectrum = torch.angle(fft_shift)
 
-                # 存储傅里叶特征
+               
                 fft_features.append({
                     'magnitude': magnitude_spectrum,
                     'phase': phase_spectrum
                 })
 
-                # 使用幅度谱进行特征提取
+               
                 x_fft = magnitude_spectrum
                 feature_list.append(x_fft.clone())
             else:
@@ -356,7 +356,7 @@ def densenet201(pretrained=False, progress=True, **kwargs):
                      **kwargs)
 
 if __name__=="__main__":
-    model=densenet121()#我现在要改成64*64
+    model=densenet121()
     data=torch.ones(4,3,80,80)
     x, featurelist = model(data)
     print(x.shape)
