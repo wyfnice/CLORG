@@ -103,7 +103,7 @@ class SupConLoss(nn.Module):
        
         loss = - (self.temperature / self.base_temperature) 
         loss = loss.view(anchor_count, batch_size).mean()  
-        lossnegative=(((logits_mask - mask) * log_prob).sum(1) / (logits_mask-mask ).sum(1))*(self.temperature / self.base_temperature)#负样本的对数概率的均值，值越小
+        lossnegative=(((logits_mask - mask) * log_prob).sum(1) / (logits_mask-mask ).sum(1))*(self.temperature / self.base_temperature)
         lossnegative=torch.exp(lossnegative.view(anchor_count, batch_size).mean())
         return losspostive + lossnegative * 0.8
 
