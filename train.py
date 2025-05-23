@@ -145,7 +145,7 @@ def train_fold(fold_idx, train_idx, val_idx):
             total += float(labels.size(0))
             correct += float(predicted.eq(labels.data).cpu().sum())
 
-        # 验证阶段
+       
         net.eval()
         val_correct = 0.0
         val_total = 0.0
@@ -218,7 +218,7 @@ if __name__ == "__main__":
         for i, acc in enumerate(fold_results):
             file.write(f"Fold {i + 1}: {acc:.4f}%\n")
 
-    # 保存所有折合并的验证集结果
+   
     np.save(os.path.join(results_dir, "all_val_labels.npy"), np.concatenate(all_val_labels_all))
     np.save(os.path.join(results_dir, "all_val_preds.npy"), np.concatenate(all_val_preds_all))
     np.save(os.path.join(results_dir, "all_val_probs.npy"), np.concatenate(all_val_probs_all))
