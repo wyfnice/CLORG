@@ -15,7 +15,7 @@ from MedVitV2 import *
 from sklearn.model_selection import KFold
 from torch.utils.data import SubsetRandomSampler
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "6"
+
 
 def CrossEntropy(outputs, targets):
     log_softmax_outputs = F.log_softmax(outputs / 3, dim=1)
@@ -90,9 +90,7 @@ def train_fold(fold_idx, train_idx, val_idx):
     val_loader = torch.utils.data.DataLoader(
         train_dataset, batch_size=BATCH_SIZE, sampler=val_sampler, num_workers=4)
 
-    if args.model == "medvit":
-        model_name = MedViT_base
-    elif args.model == "densenet121":
+    if args.model == "densenet121":
         model_name = densenet121
     elif args.model == "densenet201":
         model_name = densenet201
