@@ -11,7 +11,6 @@ from torchvision import datasets
 from loss import *
 from densenet import *
 from cutout import *
-from MedVitV2 import *
 from sklearn.model_selection import KFold
 from torch.utils.data import SubsetRandomSampler
 
@@ -67,7 +66,7 @@ class TwoCropTransform:
     def __call__(self, x):
         return [self.transform1(x), self.transform2(x)]
 
-train_dir = "/home/weiyafang/DQDETR/CIFAR/NewColonDataset/trainval1/"
+train_dir = "Datasets_dir"
 train_dataset = datasets.ImageFolder(
     root=train_dir,
     transform=TwoCropTransform(transform1, transform2)
